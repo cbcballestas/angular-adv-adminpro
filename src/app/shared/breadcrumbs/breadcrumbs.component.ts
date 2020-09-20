@@ -1,16 +1,35 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
+import { ActivationEnd, Router } from '@angular/router';
+import { filter, map } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-breadcrumbs',
   templateUrl: './breadcrumbs.component.html',
-  styles: [
-  ]
+  styles: [],
 })
-export class BreadcrumbsComponent implements OnInit {
+export class BreadcrumbsComponent implements OnDestroy {
+  titulo: string;
+  tituloSubs$: Subscription;
 
-  constructor() { }
-
-  ngOnInit(): void {
+  constructor(private router: Router) {
+    this.tituloSubs$ = this._getArgumentosRuta().subscribe(({ titulo }) => {
+      this.titulo = titulo;
+      document.title = `AdminPro - ${titulo}`;
+    });
+  }
+  ngOnDestroy(): void {
+    this.tituloSubs$.unsubscribe();
   }
 
+  /**
+   * * Obtiene datos de la URL para agregar títulos a las  páginas y a los breadcrumbs
+   */
+  private _getArgumentosRuta() {
+    return this.router.events.pipe(
+      filter((event) => event instanceof ActivationEnd),
+      filter((event: ActivationEnd) => event.snapshot.firstChild === null),
+      map((event: ActivationEnd) => event.snapshot.data)
+    );
+  }
 }
